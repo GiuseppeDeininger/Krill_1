@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <style>
+    body {
+      text-align: center;
+      font-family: "Trebuchet MS", Arial;
+      margin-left:auto;
+      margin-right:auto;
+    }
+    .slider {
+      width: 300px;
+    }
+  </style>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+  <h1>ESP32 with Servo</h1>
+  <p>Servo Position: <span id="servoPos"></span></p>
+  <input type="range" min="0" max="180" class="slider" id="servoSlider" onchange="servo(this.value)"/>
+  <p>Motor Position: <span id="motorPos"></span></p>
+  <input type="range" min="0" max="255" class="slider" id="motorSlider" onchange="motor(this.value)"/>
+  <script>
+    var servoSlider = document.getElementById("servoSlider");
+    var servoPos = document.getElementById("servoPos");
+    servoPos.innerHTML = servoSlider.value;
+    servoSlider.oninput = function() {
+      servoSlider.value = this.value;
+      servoPos.innerHTML = this.value;
+    }
+    $.ajaxSetup({timeout:1000});
+    function servo(pos) {
+      var gamepads = navigator.getGamepads();
+      console.log(gamepads);
+      $.get("/?servo=" + pos + "&");
+      {Connection: close};
+    }
+    var motorSlider = document.getElementById("motorSlider");
+    var motorPos = document.getElementById("motorPos");
+    motorPos.innerHTML = motorSlider.value;
+    motorSlider.oninput = function() {
+      motorSlider.value = this.value;
+      motorPos.innerHTML = this.value;
+    }
+    function motor(pos) {
+      $.get("/?motor=" + pos + "&");
+      {Connection: close};
+    }
+  </script>
+  <script>
+    var haveEvents = 'ongamepadconnected' in window;
+    var controllers = {};
+
+    function connecthandler(e) {
+      addgamepad(e.gamepad);
+    }
+
+    function addgamepad(gamepad) {
+      controllers[gamepad.index] = gamepad;
+
+      var d = document.createElement("div");
+      d.setAttribute("id", "controller" + gamepad.index);
+
+      var a = document.createElement("div");
+      a.className = "axes";
+
+      for (var i = 0; i < 2; i++) {
+        var p = document.createElement("progress");
+        p.className = "axis";
+        //p.id = "a" + i;
+        p.setAttribute("max", "2");
+        p.setAttribute("value", "1");
+        p.innerHTML = i;
+        a.appendChild(p);
+      }
+
+      d.appendChild(a);
+
+      var start = document.getElementById("start");
+      if (start) {
+        start.style.display = "none";
+      }
+
+      document.body.appendChild(d);
+      requestAnimationFrame(updateStatus);
+    }
+
+    function disconnecthandler(e) {
+      removegamepad(e.gamepad);
+    }
+
+    function removegamepad(gamepad) {
+      var d = document.getElementById("controller" + gamepad.index);
+      document.body.removeChild(d);
+      delete controllers[gamepad.index];
+    }
+
+    function updateServo(newValue) {
+      servoSlider.value = newValue
+      servoPos.innerHTML = newValue
+      servo(newValue);
+      console.log("Servo: " + newValue);
+    }
+
+    function updateMotor(newValue) {
+      motorSlider.value = newValue;
+      motorPos.innerHTML = newValue;
+      motor(newValue);
+      console.log("Motor: " + newValue);
+    }
+
+    function updateStatus() {
+      if (!haveEvents) {
+        scangamepads();
+      }
+
+      var i = 0;
+      var j;
+
+      for (j in controllers) {
+        var controller = controllers[j];
+        var d = document.getElementById("controller" + j);
+        var buttons = d.getElementsByClassName("button");
+
+        var axes = d.getElementsByClassName("axis");
+        for (i = 0; i < 2; i++) {
+          var a = axes[i];
+          a.innerHTML = i + ": " + controller.axes[i].toFixed(4);
+          var duty = controller.axes[i];
+          a.setAttribute("value", controller.axes[i] + 1);
+          if (i == 0 && controller.axes[i] != 0) {
+            console.log("got to servo");
+            var servoValue = Math.round((duty + 1) * 90);
+            updateServo(servoValue);
+            setTimeout(function(){updateServo(90);}, 100);
+          }
+          else if (i == 1 && controller.axes[i] != 0) {
+            console.log("got to motor");
+            var motorValue = Math.round(Math.abs(duty) * 255);
+            updateMotor(motorValue);
+            setTimeout(function(){updateMotor(0);}, 100);
+          }
+          console.log("value" + controller.axes[i] + 1);
+        }
+      }
+
+      requestAnimationFrame(updateStatus);
+    }
+
+    function scangamepads() {
+      var gamepads = navigator.getGamepads ? navigator.getGamepads() : (navigator.webkitGetGamepads ? navigator.webkitGetGamepads() : []);
+      for (var i = 0; i < gamepads.length; i++) {
+        if (gamepads[i]) {
+          if (gamepads[i].index in controllers) {
+            controllers[gamepads[i].index] = gamepads[i];
+          } else {
+            addgamepad(gamepads[i]);
+          }
+        }
+      }
+    }
+
+    window.addEventListener("gamepadconnected", connecthandler);
+    window.addEventListener("gamepaddisconnected", disconnecthandler);
+
+    if (!haveEvents) {
+      setInterval(scangamepads, 500);
+    }
+  </script>
+</body>
+</html>
