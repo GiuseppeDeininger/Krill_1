@@ -1,8 +1,15 @@
 #include <Arduino.h>
 #include <Krill_1_PCB.h>
 #include <Krill_1_Server.h>
+//#include <Stepper.h>
 // #include <WiFiUdp.h>
 // #include <SPIFFS.h>
+
+// Number of steps per output rotation
+#define stepsPerRevolution 200
+
+// initialize the stepper library on pins 15,2,0,4
+// Stepper myStepper(stepsPerRevolution, 15,2,0,4);
 
 bool state_red = false;
 bool state_green = false;
@@ -25,6 +32,12 @@ void setup() {
   // ledcAttachPin(LED_RED, 2);
   // ledcSetup(0, 5000, 8);
   // ledcAttachPin(LED_GREEN, 0);
+
+  // // set the speed at 20 rpm:
+  // myStepper.setSpeed(20);
+  // // initialize the serial port:
+  // pinMode(19, OUTPUT);
+  digitalWrite(19, HIGH);
 
   Krill_1_setup(true);
   startWiFi();
@@ -165,4 +178,18 @@ void loop() {
   //Serial.println("");
 
   //delay(2000);
+
+  // step one revolution in one direction:
+  // Serial.println("clockwise");
+  // myStepper.step(stepsPerRevolution);
+  // delay(500);
+
+  // // step one revolution in the other direction:
+  // Serial.println("counterclockwise");
+  // myStepper.step(-stepsPerRevolution);
+  // delay(500);
+
 }
+
+
+
