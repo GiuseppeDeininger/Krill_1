@@ -47,7 +47,7 @@ void Krill_1_setup(bool usesServo) {
     } 
 
     //Starts motors
-    Motor_1.attach(MOTOR_1);
+    Motor_1.attach(MOTOR_1, 1000, 2000);
     Motor_1.write(0);
 
     if (usesServo) {
@@ -55,7 +55,7 @@ void Krill_1_setup(bool usesServo) {
         Servo_1.write(90);
     }
     else {
-        Motor_2.attach(MOTOR_2);
+        Motor_2.attach(MOTOR_2, 1000, 2000);
         Motor_2.write(0);
     }
 }
